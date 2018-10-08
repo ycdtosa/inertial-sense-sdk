@@ -1026,7 +1026,6 @@ int processBinaryRxPacket(com_manager_t* cmInstance, int pHandle, packet_t *pkt,
 {
 	p_data_t			*data;
 	p_data_hdr_t		*dataHdr;
-	uint8_t				*dataBuf;
 	registered_data_t	*regd;
 	uint8_t		pid = (uint8_t)(pkt->hdr.pid);
 
@@ -1045,7 +1044,6 @@ int processBinaryRxPacket(com_manager_t* cmInstance, int pHandle, packet_t *pkt,
 	case PID_DATA:
 		data = (p_data_t*)(pkt->body.ptr);
 		dataHdr = &(data->hdr);
-		dataBuf = data->buf;
 
 		// Validate Data
 		if (dataHdr->id >= DID_COUNT)

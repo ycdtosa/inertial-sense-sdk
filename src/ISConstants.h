@@ -107,7 +107,7 @@ extern "C" {
 
 #endif
 
-#if defined(PLATFORM_IS_EMBEDDED) && PLATFORM_IS_EMBEDDED
+#if defined(FREERTOS) && FREERTOS
 
 extern void* pvPortMalloc(size_t xWantedSize);
 extern void vPortFree(void* pv);

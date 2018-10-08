@@ -545,9 +545,9 @@ static __inline void normalize_Vec4d( Vector4d result, const Vector4d v )
 static __inline int is_equal_Vec3(const Vector3 v1, const Vector3 v2)
 {
 	return
-		(v1[0] == v2[0]) &&
-		(v1[1] == v2[1]) &&
-		(v1[2] == v2[2]);
+        (v1[0] == v2[0]) &&
+        (v1[1] == v2[1]) &&
+        (v1[2] == v2[2]);
 }
 
 /*
@@ -556,10 +556,10 @@ static __inline int is_equal_Vec3(const Vector3 v1, const Vector3 v2)
 static __inline int is_equal_Vec4(const Vector4 v1, const Vector4 v2)
 {
 	return
-		(v1[0] == v2[0]) &&
-		(v1[1] == v2[1]) &&
-		(v1[2] == v2[2]) &&
-		(v1[3] == v2[3]);
+        (v1[0] == v2[0]) &&
+        (v1[1] == v2[1]) &&
+        (v1[2] == v2[2]) &&
+        (v1[3] == v2[3]);
 }
 
 /*
@@ -645,7 +645,7 @@ static __inline int isInf_array_d(double *a, int size)
 	int i;
 
 	double tmp = 1.0f;
-	double inf = 1.0f / (tmp - 1.0f);
+    double inf = 1.0 / (tmp - 1.0);
 
 	for (i = 0; i<size; i++)
 	{

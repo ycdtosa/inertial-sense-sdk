@@ -751,9 +751,9 @@ int gpsToNmeaGGA(const gps_pos_t* gps, char* buffer, int bufferLength)
     written = SNPRINTF(buffer, bufferLength, ",%u,%02u,%.2f,%.2f,M,%.2f,M,,",
                        (unsigned)fixQuality,
                        (unsigned)(gps->status & GPS_STATUS_NUM_SATS_USED_MASK),
-                       gps->pDop,
-                       gps->hMSL,
-                       gps->hMSL - gps->lla[2]);
+                       (double)gps->pDop,
+                       (double)gps->hMSL,
+                       (double)gps->hMSL - gps->lla[2]);
     buffer += written;
     bufferLength -= written;
 
