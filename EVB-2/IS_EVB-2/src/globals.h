@@ -67,7 +67,8 @@ typedef struct PACKED
 POP_PACK
 
 
-#define STREAM_BUFFER_SIZE      4096
+// #define STREAM_BUFFER_SIZE			4096
+#define STREAM_BUFFER_SIZE			8192
 
 extern uint8_t                      g_hdw_detect;
 extern dev_info_t                   g_evbDevInfo;
