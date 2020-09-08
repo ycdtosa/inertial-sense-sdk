@@ -39,7 +39,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 int cDataCSV::WriteHeaderToFile(FILE* pFile, uint32_t id)
 {
 	// Verify file pointer
-	if (pFile == NULL || id >= DID_COUNT)
+	if (pFile == NULL || id >= 256)
 	{
 		return 0;
 	}

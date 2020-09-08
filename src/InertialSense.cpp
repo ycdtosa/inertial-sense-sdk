@@ -76,7 +76,7 @@ static void staticProcessRxData(CMHANDLE cmHandle, int pHandle, p_data_t* data)
 {
 	(void)cmHandle;
 
-	if (data->hdr.id >= DID_COUNT)
+	if (data->hdr.id >= 256)
 	{
 		return;
 	}

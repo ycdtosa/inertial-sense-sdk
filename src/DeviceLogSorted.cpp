@@ -107,7 +107,7 @@ bool cDeviceLogSorted::SaveData(p_data_hdr_t* dataHdr, const uint8_t* dataBuf)
 
 	uint32_t id = dataHdr->id;
 
-	if (id >= DID_COUNT)
+	if (id >= 256)
 	{
 		return false;
 	}
@@ -340,7 +340,7 @@ bool cDeviceLogSorted::ReadAllChunksFromFile()
 		id = m_readChunk.m_subHdr.dHdr.id;
 
 		// Error check ID
-		if (id >= DID_COUNT || id == DID_NULL)
+		if (id >= 256 || id == DID_NULL)
 		{
             continue;
 		}

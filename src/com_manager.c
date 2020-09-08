@@ -254,7 +254,7 @@ void comManagerRegisterInstance(CMHANDLE cmInstance_, uint32_t dataId, pfnComMan
 	com_manager_t* cmInstance = (com_manager_t*)cmInstance_;
 
 	// Validate ID and data pointer
-	if (dataId >= DID_COUNT)
+	if (dataId >= 256)
 	{
 		return;
 	}
@@ -718,7 +718,7 @@ int processBinaryRxPacket(com_manager_t* cmInstance, int pHandle, packet_t *pkt)
 		dataHdr = &(data->hdr);
 
 		// Validate Data
-		if (dataHdr->id >= DID_COUNT)
+		if (dataHdr->id >= 256)
 		{
 			return -1;
 		}
@@ -876,7 +876,7 @@ bufTxRxPtr_t* comManagerGetRegisteredDataInfo(uint32_t dataId)
 
 bufTxRxPtr_t* comManagerGetRegisteredDataInfoInstance(CMHANDLE _cmInstance, uint32_t dataId)
 {
-	if (dataId >= DID_COUNT)
+	if (dataId >= 256)
 	{
 		return 0;
 	}
@@ -897,7 +897,7 @@ int comManagerGetDataRequestInstance(CMHANDLE _cmInstance, int pHandle, p_data_g
 	broadcast_msg_t* msg = 0;
 
 	// Validate the request
-	if (req->id >= DID_COUNT)
+	if (req->id >= 256)
 	{
 		// invalid data id
 		return -1;

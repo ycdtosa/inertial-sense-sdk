@@ -2128,7 +2128,7 @@ bool cISDataMappings::DataToString(const data_info_t& info, const p_data_hdr_t* 
 
 double cISDataMappings::GetTimestamp(const p_data_hdr_t* hdr, const uint8_t* buf)
 {
-    if (hdr == NULL || buf == NULL || hdr->id == 0 || hdr->id >= DID_COUNT || hdr->size == 0)
+    if (hdr == NULL || buf == NULL || hdr->id == 0 || hdr->id >= 256 || hdr->size == 0)
 	{
 		return 0.0;
 	}
