@@ -2897,20 +2897,7 @@ typedef enum
     /** XBee: failed to configure */
     EVB_STATUS_XBEE_CONFIG_FAILURE          = 0x00800000,
 
-    /** EVB_FAULT_CODES_MASK */
-    EVB_STATUS_LUNA_FAULT_MASK              = 0x0F000000,
-
-    /** EVB_FAULT_CODES_OFFSET */
-    EVB_STATUS_LUNA_FAULT_OFFSET             = 24,
-
 } eEvbStatus;
-
-typedef enum
-{
-    /**Geofence boundary exceeded*/
-    EVB_LUNA_FAULT_GEOFENCE_BOUNDARY_EXCEEDED    = 0x1,
-    
-} eEvb2FaultCodes;
 
 /** EVB-2 communications ports. */
 enum eEvb2CommPorts
@@ -2983,17 +2970,20 @@ typedef struct
 typedef struct
 {
     /** WiFi SSID */
-    uint8_t                 ssid[WIFI_SSID_PSK_SIZE];
+    char                    ssid[WIFI_SSID_PSK_SIZE];
 
     /** WiFi PSK */
-    uint8_t                 psk[WIFI_SSID_PSK_SIZE];
+    char                    psk[WIFI_SSID_PSK_SIZE];
 
 } evb_wifi_t;
 
 typedef struct
 {  
     /** Server IP address */
-    uint32_t                ipAddr;
+    union {
+		uint32_t	u32;
+		uint8_t		u8[4];
+	} ipAddr;
 
     /** Server port */
     uint32_t                port;
