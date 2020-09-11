@@ -29,21 +29,9 @@ extern "C" {
 
 #define USE_RTC_DATE_TIME       1   // Use RTC for system data and time
 
-#define DEBUG_I_ARRAY_SIZE		9
-#define DEBUG_F_ARRAY_SIZE		9
-#define DEBUG_LF_ARRAY_SIZE		3
-
 #define STREAM_INS_FOR_TIME_SYNC        1
 #define SKI_BOX_STATUS_LED_PIN          GPIO_10_PIN
 #define UBLOX_LOG_ENABLE			    0
-
-/* (DID_DEBUG_ARRAY) */
-typedef struct PACKED
-{
-    int32_t					i[DEBUG_I_ARRAY_SIZE];
-    f_t						f[DEBUG_F_ARRAY_SIZE];
-    double                  lf[DEBUG_LF_ARRAY_SIZE];
-} debug_array_t;
 
 typedef struct
 {
@@ -69,11 +57,16 @@ PUSH_PACK_1
 typedef struct PACKED
 {
     union
-    {
+    {	// Standard EVB-2
 	    evb_flash_cfg_t m;
-	    uint32_t padding[BOOTLOADER_FLASH_BLOCK_SIZE / sizeof(uint32_t)];  // 8 Kb
-// 	    uint32_t padding[IFLASH_PAGE_SIZE / sizeof(uint32_t)];  // 512 bytes
+	    uint32_t padding[BOOTLOADER_FLASH_BLOCK_SIZE / 2 / sizeof(uint32_t)];  // 4096 bytes
     } g0;
+
+    union
+    {	// Reserved for Luna
+	    uint32_t padding[BOOTLOADER_FLASH_BLOCK_SIZE / 2 / sizeof(uint32_t)];  // 4096 bytes
+    } g1;
+	
 } nvm_config_t;
 
 POP_PACK
@@ -109,6 +102,7 @@ int comRead(int serialNum, unsigned char *buf, int size, uint32_t ledPin);
 void com_bridge_forward(uint32_t srcPort, uint8_t *buf, int len);
 void com_bridge_smart_forward(uint32_t srcPort, uint32_t ledPin);
 
+void nvr_validate_config_integrity(evb_flash_cfg_t* cfg);
 void nvr_init(void);
 void nvr_slow_maintenance(void);
 

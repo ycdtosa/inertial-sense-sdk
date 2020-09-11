@@ -108,6 +108,7 @@ static void staticProcessRxData(CMHANDLE cmHandle, int pHandle, p_data_t* data)
 	case DID_DEV_INFO:			s->devices[pHandle].devInfo = *(dev_info_t*)data->buf;			break;
 	case DID_SYS_CMD:			s->devices[pHandle].sysCmd = *(system_command_t*)data->buf;		break;
 	case DID_FLASH_CONFIG:		s->devices[pHandle].flashConfig = *(nvm_flash_cfg_t*)data->buf;	break;
+	case DID_EVB_FLASH_CFG:		s->devices[pHandle].evbFlashCfg = *(evb_flash_cfg_t*)data->buf;	break;
 	case DID_GPS1_POS:
 		// every 5 seconds, put in a new gps position message
 		static time_t nextGpsMessageTime;
@@ -182,8 +183,9 @@ bool InertialSense::HasReceivedResponseFromDevice(size_t index)
 		return false;
 	}
 
-	return (m_comManagerState.devices[index].flashConfig.size != 0 && 
-		m_comManagerState.devices[index].devInfo.serialNumber != 0 && 
+	return (
+		m_comManagerState.devices[index].flashConfig.size != 0 &&
+		m_comManagerState.devices[index].devInfo.serialNumber != 0 &&
 		m_comManagerState.devices[index].devInfo.manufacturer[0] != 0);
 }
 
@@ -621,9 +623,22 @@ void InertialSense::SetFlashConfig(const nvm_flash_cfg_t& flashConfig, int pHand
 	Update();
 }
 
+void InertialSense::SetEvbFlashConfig(const evb_flash_cfg_t& evbFlashCfg, int pHandle)
+{
+	if ((size_t)pHandle >= m_comManagerState.devices.size())
+	{
+		return;
+	}
+
+	m_comManagerState.devices[pHandle].evbFlashCfg = evbFlashCfg;
+	// [C COMM INSTRUCTION]  Update the entire DID_FLASH_CONFIG data set in the uINS.  
+	comManagerSendData(pHandle, DID_EVB_FLASH_CFG, &m_comManagerState.devices[pHandle].evbFlashCfg, sizeof(evb_flash_cfg_t), 0);
+	Update();
+}
+
 bool InertialSense::BroadcastBinaryData(uint32_t dataId, int periodMultiple, pfnHandleBinaryData callback)
 {
-	if (m_comManagerState.devices.size() == 0 || dataId >= DID_COUNT)
+	if (m_comManagerState.devices.size() == 0 || dataId >= (sizeof(m_comManagerState.binaryCallback)/sizeof(pfnHandleBinaryData)))
 	{
 		return false;
 	}
@@ -849,6 +864,7 @@ bool InertialSense::OpenSerialPorts(const char* port, int baudRate)
 			comManagerGetData((int)i, DID_SYS_CMD, 0, 0, 0);
 			comManagerGetData((int)i, DID_DEV_INFO, 0, 0, 0);
 			comManagerGetData((int)i, DID_FLASH_CONFIG, 0, 0, 0);
+			comManagerGetData((int)i, DID_EVB_FLASH_CFG, 0, 0, 0);
 		}
 
 		SLEEP_MS(13);

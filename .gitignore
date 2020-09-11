@@ -6,4 +6,15 @@ build/
 obj/
 *.map
 
-
+*.obj
+x64
+Release/
+Debug/
+.vs
+*.pyd
+*.pyc
+*.so
+*.o
+IS_logs/
+*.user
+src/luna_data_sets.h

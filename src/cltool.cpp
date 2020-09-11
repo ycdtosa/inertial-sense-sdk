@@ -110,6 +110,14 @@ bool cltool_parseCommandLine(int argc, char* argv[])
 		{
 			g_commandLineOptions.disableBroadcastsOnClose = true;
 		}
+		else if (startsWith(a, "-evbFlashConfig="))
+		{
+			g_commandLineOptions.evbFlashConfig = &a[13];
+		}
+		else if (startsWith(a, "-evbFlashConfig"))
+		{
+			g_commandLineOptions.evbFlashConfig = ".";
+		}
 		else if (startsWith(a, "-flashConfig="))
 		{
 			g_commandLineOptions.flashConfig = &a[13];
@@ -507,6 +515,8 @@ void cltool_outputUsage()
 	cout << "OPTIONS (Read or write flash configuration)" << endl;
 	cout << "    -flashConfig" << boldOff << "    list all \"keys\" and \"values\"" << endlbOn;
 	cout << "   \"-flashConfig=key=value|key=value\" " << boldOff <<  endlbOn;
+	cout << "    -evbFlashConfig" << boldOff << "    list all \"keys\" and \"values\"" << endlbOn;
+	cout << "   \"-evbFlashConfig=key=value|key=value\" " << boldOff <<  endlbOn;
 	cout << "        " << boldOff << "            set key / value pairs in flash config. Surround with \"quotes\" when using pipe operator." << endlbOn;
 	cout << "EXAMPLES" << endlbOn;
 	cout << "    " << APP_NAME << APP_EXT << " -c=" << EXAMPLE_PORT << " -flashConfig  " << boldOff << "# Read from device and print all keys and values" << endlbOn;
@@ -576,6 +586,56 @@ bool cltool_updateFlashConfig(InertialSense& inertialSenseInterface, string flas
 			}
 		}
 		inertialSenseInterface.SetFlashConfig(flashConfig);
+		g_inertialSenseDisplay.Clear();
+		return true;
+	}
+}
+
+bool cltool_updateEvbFlashConfig(InertialSense& inertialSenseInterface, string flashConfigString)
+{
+	evb_flash_cfg_t evbFlashCfg = inertialSenseInterface.GetEvbFlashConfig();
+	const map_name_to_info_t& flashMap = *cISDataMappings::GetMapInfo(DID_EVB_FLASH_CFG);
+
+	if (flashConfigString.length() < 2)
+	{
+		// read flash config and display
+		data_mapping_string_t stringBuffer;
+		cout << "Current EVB flash config" << endl;
+		for (map_name_to_info_t::const_iterator i = flashMap.begin(); i != flashMap.end(); i++)
+		{
+			if (cISDataMappings::DataToString(i->second, NULL, (const uint8_t*)&evbFlashCfg, stringBuffer))
+			{
+				cout << i->second.name << " = " << stringBuffer << endl;
+			}
+		}
+		return false;
+	}
+	else
+	{
+		vector<string> keyValues;
+		splitString(flashConfigString, "|", keyValues);
+		for (size_t i = 0; i < keyValues.size(); i++)
+		{
+			vector<string> keyAndValue;
+			splitString(keyValues[i], "=", keyAndValue);
+			if (keyAndValue.size() == 2)
+			{
+				if (flashMap.find(keyAndValue[0]) == flashMap.end())
+				{
+					cout << "Unrecognized EVB flash config key '" << keyAndValue[0] << "' specified, ignoring." << endl;
+				}
+				else
+				{
+					const data_info_t& info = flashMap.at(keyAndValue[0]);
+					int radix = (keyAndValue[1].compare(0, 2, "0x") == 0 ? 16 : 10);
+					int substrIndex = 2 * (radix == 16); // skip 0x for hex
+					const string& str = keyAndValue[1].substr(substrIndex);
+					cISDataMappings::StringToData(str.c_str(), (int)str.length(), NULL, (uint8_t*)&evbFlashCfg, info, radix);
+					cout << "Updated EVB flash config key '" << keyAndValue[0] << "' to '" << keyAndValue[1].c_str() << "'" << endl;
+				}
+			}
+		}
+		inertialSenseInterface.SetEvbFlashConfig(evbFlashCfg);
 		g_inertialSenseDisplay.Clear();
 		return true;
 	}
