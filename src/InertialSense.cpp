@@ -266,6 +266,11 @@ void InertialSense::LoggerThread(void* info)
 	printf("\n...Logger thread terminated...\n");
 }
 
+void InertialSense::EmptyStepLogger(InertialSense* i, const p_data_t* data, int pHandle)
+{
+
+}
+
 void InertialSense::StepLogger(InertialSense* i, const p_data_t* data, int pHandle)
 {
 	cMutexLocker logMutexLocker(&i->m_logMutex);
@@ -318,6 +323,7 @@ bool InertialSense::SetLoggerEnabled(
 	}
 
 	// !enable, shutdown logger gracefully
+	m_comManagerState.stepLogFunction = &InertialSense::EmptyStepLogger;
 	DisableLogging();
 	return true;
 }
