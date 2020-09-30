@@ -62,6 +62,10 @@ static void vTaskMaint(void *pvParameters)
 	rtos_task_t &task = g_rtos.task[EVB_TASK_MAINTENANCE];
 	evbTaskMaintInit(pvParameters);
 
+	//Initialize proximity sensor
+	distanceInit();
+	
+	
 	for (;;)
 	{    
 		if(evbTaskMaint(task))
@@ -88,6 +92,7 @@ static void vTaskMaint(void *pvParameters)
 		    
 		// Add code here...
 		//////////////////////////////////////////////////////////////////////////
+		distanceProcess();
 	}
 }
 

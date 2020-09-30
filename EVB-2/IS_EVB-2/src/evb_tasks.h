@@ -11,6 +11,8 @@
 #include "sd_card_logger.h"
 #include "control_law.h"
 #include "CAN.h"
+#include "../../../hw-libs/drivers/d_i2c.h"
+#include "distance.h"
 
 // RTOS Task Configuration
 #define TASK_COMM_PERIOD_MS             1

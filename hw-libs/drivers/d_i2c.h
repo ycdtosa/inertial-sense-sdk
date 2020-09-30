@@ -13,6 +13,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #ifndef _D_I2C_H_
 #define _D_I2C_H_
 
+#include "compiler.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

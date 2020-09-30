@@ -19,11 +19,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 //Configuration for TWI instance
 #define BOARD_ID_TWI	ID_TWIHS0
+#define BOARD_TWI		TWIHS0
 #define TWI_CLK			400000
 
+#define TWI_DATA_GPIO   PIO_PA3_IDX
+#define TWI_DATA_FLAGS  (IOPORT_MODE_MUX_A)
+#define TWI_CLK_GPIO    PIO_PA4_IDX
+#define TWI_CLK_FLAGS   (IOPORT_MODE_MUX_A)
 
 int i2cInit( void )
 {
+	//Configure pins
+	ioport_set_pin_peripheral_mode(TWI_DATA_GPIO, TWI_DATA_FLAGS);
+	ioport_set_pin_peripheral_mode(TWI_CLK_GPIO, TWI_CLK_FLAGS);
+	
 	/* Enable the peripheral clock for TWI */
 	pmc_enable_periph_clk(BOARD_ID_TWI);
 
@@ -32,7 +41,7 @@ int i2cInit( void )
 	opt.master_clk = sysclk_get_peripheral_hz();
 	opt.speed      = TWI_CLK;
 
-	if (twihs_master_init(BOARD_ID_TWI, &opt) != TWIHS_SUCCESS)
+	if (twihs_master_init(BOARD_TWI, &opt) != TWIHS_SUCCESS)
 		return -1;
 		
 	return 0;		
@@ -69,7 +78,7 @@ int i2cRead(uint8_t chip_addr, uint32_t address, uint8_t address_len, void *data
 	packet_rx.length      = len;	
 	
 	//Read Data
-	if (twihs_master_read(BOARD_ID_TWI, &packet_rx) != TWIHS_SUCCESS)
+	if (twihs_master_read(BOARD_TWI, &packet_rx) != TWIHS_SUCCESS)
 		return 0;
 		
 	return len;
@@ -105,7 +114,7 @@ int i2cWrite(uint8_t chip_addr, uint32_t address, uint8_t address_len, void *dat
 	packet_tx.length      = len;	
 
 	//Write data
-	if (twihs_master_write(BOARD_ID_TWI, &packet_tx) != TWIHS_SUCCESS)
+	if (twihs_master_write(BOARD_TWI, &packet_tx) != TWIHS_SUCCESS)
 		return 0;
 		
 	return len;
