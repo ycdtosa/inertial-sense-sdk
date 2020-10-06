@@ -118,6 +118,26 @@ static void OPT3101_startSample(void)
 	OPT3101_writeReg(0x00, 0x800000);
 }
 
+const uint8_t OPT3101ChannelAutoSwitch = 255;
+
+void OPT3101_setChannel(uint8_t channel)
+{
+	if (channel > 2) { channel = OPT3101ChannelAutoSwitch; }
+
+	uint32_t reg2a = OPT3101_readReg(0x2a);
+	if (channel == OPT3101ChannelAutoSwitch)
+	{
+		reg2a |= (1 << 0);   // EN_TX_SWITCH = 1
+	}
+	else
+	{
+		reg2a &= ~((uint32_t)1 << 0);  // EN_TX_SWITCH = 0
+		reg2a = reg2a & ~((uint32_t)3 << 1) | (channel & 3) << 1;
+	}
+
+	OPT3101_writeReg(0x2a, reg2a);
+}
+
 void distanceInit(void)
 {
 	// Wait for INIT_LOAD_DONE to be set, indicating that the OPT3101 is done loading settings from its EEPROM.
@@ -132,6 +152,7 @@ void distanceInit(void)
 
 	OPT3101_setMonoshotMode();
 	OPT3101_setFrameTiming(512);
+	OPT3101_setChannel(255);
 }
 
 void distanceProcess(void)
