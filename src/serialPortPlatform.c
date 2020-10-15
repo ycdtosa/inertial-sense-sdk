@@ -332,7 +332,22 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
 
 #else
 
-    int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
+/*
+       O_NONBLOCK or O_NDELAY
+              When possible, the file is opened in nonblocking mode.  Neither the open() nor any subsequent operations on the file descriptor which is returned will cause the calling process to wait.
+
+              Note  that  this  flag has no effect for regular files and block devices; that is, I/O operations will (briefly) block when device activity is required, regardless of whether O_NONBLOCK is set.
+              Since O_NONBLOCK semantics might eventually be implemented, applications should not depend upon blocking behavior when specifying this flag for regular files and block devices.
+
+              For the handling of FIFOs (named pipes), see also fifo(7).  For a discussion of the effect of O_NONBLOCK in conjunction with mandatory file locks and with file leases, see fcntl(2).
+ 
+       O_NOCTTY
+              If pathname refers to a terminal device—see tty(4)—it will not become the process's controlling terminal even if the process does not have one.
+ 
+*/
+
+    //int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
+    int fd = open(port, O_RDWR | O_NOCTTY);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
     {
         return 0;
@@ -491,54 +506,238 @@ static int serialPortReadTimeoutPlatformWindows(serialPortHandle* handle, unsign
 
 #else
 
-static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned char* buffer, int readCount, int timeoutMilliseconds)
+static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
+    printf("..serialPortReadTimeoutPlatformLinux\n");
     int totalRead = 0;
     int dtMs;
     int n;
+    short readReady, writeReady;
     struct timeval start, curr;
     if (timeoutMilliseconds > 0)
     {
         gettimeofday(&start, NULL);
     }
 
+    printf("begin poll loop\n");
     while (1)
     {
+        printf("\ttimeoutMilliseconds: %d\n", timeoutMilliseconds);
+
+	struct pollfd fds[1];
+	fds[0].fd = handle->fd;
+	fds[0].events = 0;
+	if (waitForRead)
+	{
+		fds[0].events |= POLLIN;
+	}
+	if (waitForWrite)
+	{
+		fds[0].events |= POLLOUT;
+	}
+
+	printf("\tpoll handle fd: %d\n", handle->fd);
+	int pollrc = poll(fds, 1, timeoutMilliseconds);
+	printf("\t%d pollrc\n", pollrc);
+	printf("\t%d fds[0].revents\n", fds[0].revents);
+
         if (timeoutMilliseconds > 0)
         {
-            struct pollfd fds[1];
-            fds[0].fd = handle->fd;
-            fds[0].events = POLLIN;
-            int pollrc = poll(fds, 1, timeoutMilliseconds);
-            if (pollrc <= 0 || !(fds[0].revents & POLLIN))
-            {
-                break;
-            }
-        }
+	    gettimeofday(&curr, NULL);
+	    dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
+	    if (dtMs >= timeoutMilliseconds)
+	    {
+		printf("\ttimeout exceeded\n");
+		break;
+	    }
+
+	    // try for another loop around with a lower timeout
+	    timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
+	}
+/*
+On  success,  a positive number is returned; this is the number of structures which have nonzero
+revents fields (in other words, those descriptors with events or errors reported).  A value of 0
+indicates that the call timed out and no file descriptors were ready.  On error, -1 is returned,
+and errno is set appropriately.
+*/
+
+	    if (pollrc > 0)
+	    {
+		printf("\tpoll ok\n");
+		readReady = fds[0].revents & POLLIN;
+		writeReady = fds[0].revents & POLLOUT;
+
+		if (readReady) printf("\t\tPOLLIN\n");
+		if (writeReady) printf("\t\tPOLLOUT\n");
+
+		break;
+	    }
+
+	    if (pollrc == 0)
+	    {
+		printf("\tpoll timeout\n");
+		return 0;
+	    }
+
+	    if (pollrc < 0)
+	    {
+		printf("\t%d error code\n", errno);
+		if (errno == EAGAIN)
+		{
+			printf("\tEAGAIN received\n");
+			
+			// printf("retrying...\n");
+			// sleep(1);
+			// continue;
+		}
+		if (errno == EWOULDBLOCK)
+		{
+			printf("\tEWOULDBLOCK recieved\n");
+		}
+
+/*
+       EFAULT The array given as argument was not contained in the calling program's address space.
+
+       EINTR  A signal occurred before any requested event; see signal(7).
+
+       EINVAL The nfds value exceeds the RLIMIT_NOFILE value.
+
+       ENOMEM There was no space to allocate file descriptor tables.
+*/
+
+
+		printf("\terror %d from poll, fd %d\n", errno, handle->fd);
+		error_message("error %d from poll, fd %d", errno, handle->fd);
+		// break;
+		return 0;
+	    }
+
+        printf("\tpoll handle fd: %d\n", handle->fd);
+        printf("\t%d total actual\n", totalRead);
+        printf("\t%d total expected\n", readCount);
+        printf("\t%d delta\n", readCount - totalRead);
+    }
+
+    if (readReady && readCount)
+    {
+	    printf("begin read loop\n");
+    }
+    else
+    {
+	    printf("skipping read loop\n");
+    }
+
+    while (readReady && readCount)
+    {
         n = read(handle->fd, buffer + totalRead, readCount - totalRead);
-        if (n < -1)
-        {
-            error_message("error %d from read, fd %d", errno, handle->fd);
-            return 0;
-        }
-        else if (n != -1)
-        {
-            totalRead += n;
-        }
-        if (timeoutMilliseconds > 0 && totalRead < readCount)
+
+        if (timeoutMilliseconds > 0)
         {
             gettimeofday(&curr, NULL);
             dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
             if (dtMs >= timeoutMilliseconds)
             {
+		printf("\ttimeout exceeded\n");
                 break;
             }
 
             // try for another loop around with a lower timeout
             timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
         }
-        else
+/*
+       On  success,  the  number  of  bytes read is returned (zero indicates end of file), and the file
+       position is advanced by this number.  It is not an error if this number is smaller than the num‐
+       ber  of  bytes requested; this may happen for example because fewer bytes are actually available
+       right now (maybe because we were close to end-of-file, or because we are reading from a pipe, or
+       from a terminal), or because read() was interrupted by a signal.  See also NOTES.
+
+       On  error, -1 is returned, and errno is set appropriately.  In this case, it is left unspecified
+       whether the file position (if any) changes.
+*/
+
+	printf("\t%d result code\n", n);
+
+	printf("\t\tbuffer contents:\n\t\t");
+	hexdump(buffer, readCount);
+
+	if (n < 0)
+	{
+		printf("\t%d error code\n", errno);
+
+		if (errno == EWOULDBLOCK)
+		{
+			printf("\tEWOULDBLOCK recieved\n");
+		}
+
+		if (errno == EAGAIN)
+		{
+			printf("\tEAGAIN received\n");
+			
+			//printf("retrying...\n");
+			//sleep(1);
+			//continue;
+		}
+
+/*
+       EAGAIN The file descriptor fd refers to a file other than a socket and has been marked nonblock‐
+              ing  (O_NONBLOCK),  and  the  read  would  block.  See open(2) for further details on the
+              O_NONBLOCK flag.
+
+       EAGAIN or EWOULDBLOCK
+              The file descriptor fd refers to a socket and has been marked  nonblocking  (O_NONBLOCK),
+              and the read would block.  POSIX.1-2001 allows either error to be returned for this case,
+              and does not require these constants to have the same value, so  a  portable  application
+              should check for both possibilities.
+
+       EBADF  fd is not a valid file descriptor or is not open for reading.
+
+       EFAULT buf is outside your accessible address space.
+
+       EINTR  The call was interrupted by a signal before any data was read; see signal(7).
+
+       EINVAL fd  is attached to an object which is unsuitable for reading; or the file was opened with
+              the O_DIRECT flag, and either the address specified in buf, the value specified in count,
+              or the file offset is not suitably aligned.
+
+       EINVAL fd  was  created  via  a call to timerfd_create(2) and the wrong size buffer was given to
+              read(); see timerfd_create(2) for further information.
+
+       EIO    I/O error.  This will happen for example when the process  is  in  a  background  process
+              group, tries to read from its controlling terminal, and either it is ignoring or blocking
+              SIGTTIN or its process group is orphaned.  It may also occur when there  is  a  low-level
+              I/O  error  while  reading  from a disk or tape.  A further possible cause of EIO on net‐
+              worked filesystems is when an advisory lock had been taken out on the file descriptor and
+              this lock has been lost.  See the Lost locks section of fcntl(2) for further details.
+
+       EISDIR fd refers to a directory.
+
+       Other errors may occur, depending on the object connected to fd.
+
+*/
+
+		printf("\terror %d from read, fd %d\n", errno, handle->fd);
+		error_message("error %d from read, fd %d\n", errno, handle->fd);
+		break;
+	}
+
+	if (n == 0)
+	{
+		printf("\tEOF\n");
+		break;
+	}
+
+	if (n > 0)
+	{
+            totalRead += n;
+	}
+
+
+	if (totalRead >= readCount)
         {
+            printf("\t%d total actual\n", totalRead);
+            printf("\t%d total expected\n", readCount);
+            printf("\t%d delta\n", readCount - totalRead);
+	    printf("\t%d timeoutMilliseconds\n", timeoutMilliseconds);
             break;
         }
     }
@@ -547,7 +746,7 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned
 
 #endif
 
-static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds)
+static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
     serialPortHandle* handle = (serialPortHandle*)serialPort->handle;
     if (timeoutMilliseconds < 0)
@@ -561,7 +760,7 @@ static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned cha
 
 #else
 
-    return serialPortReadTimeoutPlatformLinux(handle, buffer, readCount, timeoutMilliseconds);
+    return serialPortReadTimeoutPlatformLinux(handle, buffer, readCount, timeoutMilliseconds, waitForRead, waitForWrite);
 
 #endif
 
