@@ -17,3 +17,9 @@ Release
 *.o
 IS_logs/
 *.user
+*.a
+*.swap
+ExampleProjects/
+*.swp
+CMakeFiles/
+cmake_install.cmake

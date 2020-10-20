@@ -512,7 +512,8 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned
     int totalRead = 0;
     int dtMs;
     int n;
-    short readReady, writeReady;
+    short readReady = 0;
+    short writeReady = 0;
     struct timeval start, curr;
     if (timeoutMilliseconds > 0)
     {
@@ -564,8 +565,8 @@ and errno is set appropriately.
 	    if (pollrc > 0)
 	    {
 		printf("\tpoll ok\n");
-		readReady = fds[0].revents & POLLIN;
-		writeReady = fds[0].revents & POLLOUT;
+		readReady = (fds[0].revents & POLLIN);
+		writeReady = (fds[0].revents & POLLOUT);
 
 		if (readReady) printf("\t\tPOLLIN\n");
 		if (writeReady) printf("\t\tPOLLOUT\n");
@@ -629,6 +630,10 @@ and errno is set appropriately.
 
     while (readReady && readCount)
     {
+        printf("\t%d total actual\n", totalRead);
+        printf("\t%d total expected\n", readCount);
+        printf("\t%d delta\n", readCount - totalRead);
+
         n = read(handle->fd, buffer + totalRead, readCount - totalRead);
 
         if (timeoutMilliseconds > 0)
@@ -734,6 +739,7 @@ and errno is set appropriately.
 
 	if (totalRead >= readCount)
         {
+            printf("read complete\n", totalRead);
             printf("\t%d total actual\n", totalRead);
             printf("\t%d total expected\n", readCount);
             printf("\t%d delta\n", readCount - totalRead);
