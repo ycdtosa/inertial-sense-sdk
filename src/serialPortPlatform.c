@@ -619,6 +619,12 @@ and errno is set appropriately.
         printf("\t%d delta\n", readCount - totalRead);
     }
 
+    if (writeReady)
+    {
+	    printf("write ready\n");
+	    return readCount;
+    }
+
     if (readReady && readCount)
     {
 	    printf("begin read loop\n");
@@ -663,7 +669,7 @@ and errno is set appropriately.
 	printf("\t%d result code\n", n);
 
 	printf("\t\tbuffer contents:\n\t\t");
-	hexdump(buffer, readCount);
+	hexdump('i', buffer, readCount);
 
 	if (n < 0)
 	{
@@ -739,7 +745,7 @@ and errno is set appropriately.
 
 	if (totalRead >= readCount)
         {
-            printf("read complete\n", totalRead);
+            printf("read complete\n");
             printf("\t%d total actual\n", totalRead);
             printf("\t%d total expected\n", readCount);
             printf("\t%d delta\n", readCount - totalRead);

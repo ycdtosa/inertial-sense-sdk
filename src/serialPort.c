@@ -306,10 +306,10 @@ int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned c
 	printf("%d actually written\n", actuallyWrittenCount);
 
 	printf("bytes expected written:");
-	hexdump(buffer, writeCount);
+	hexdump('e', buffer, writeCount);
 		
 	printf("bytes actually written:");
-	hexdump(buffer, actuallyWrittenCount);
+	hexdump('w', buffer, actuallyWrittenCount);
 		
 	if (actuallyWrittenCount != writeCount)
 	{
@@ -318,6 +318,9 @@ int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned c
 	}
 
 	return serialPortWaitForTimeoutWithFlags(serialPort, waitFor, waitForLength, timeoutMilliseconds, true, true);
+	
+	// HACK: assume ok
+	//return 1;
 }
 
 int serialPortWaitFor(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength)
@@ -331,14 +334,22 @@ int serialPortWaitForTimeout(serial_port_t* serialPort, const unsigned char* wai
 }
 
 
-void hexdump(unsigned char const * const buff, const size_t end)
+void hexdump(char const prefix, unsigned char const * const buff, const size_t end)
 {
+  FILE* logfile;
+  logfile = fopen("hexdump.log", "a+");
+  fprintf(logfile, "%c", prefix);
+
   for (size_t i=0; i!=end; ++i) {
     if (i % 8 == 0) printf("\n");
     if (i % 4 == 0) printf("  ");
     printf("%02hhx ", buff[i]);
+    fprintf(logfile, "%02hhx ", buff[i]);
   }
   printf("\n");
+  fprintf(logfile, "\n");
+
+  fclose(logfile);
 }
 
 int serialPortWaitForTimeoutWithFlags(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
@@ -373,10 +384,10 @@ int serialPortWaitForTimeoutWithFlags(serial_port_t* serialPort, const unsigned 
 	printf("byte count mismatch or string comparison failure\n");
 
 	printf("expected value");
-	hexdump(waitFor, waitForLength);
+	hexdump('E', waitFor, waitForLength);
 
 	printf("actual value");
-	hexdump(buf, count);
+	hexdump('R', buf, count);
 
 	return 0;
 }
