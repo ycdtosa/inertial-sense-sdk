@@ -884,7 +884,7 @@ and errno is set appropriately.
             return 0;
         }
 
-        printf("\tpoll handle fd: %d\n", handle->fd);
+        // printf("\tpoll handle fd: %d\n", handle->fd);
     // }
 
     if (writeReady && writeCount)
@@ -899,7 +899,7 @@ and errno is set appropriately.
     while (writeReady && writeCount)
     {
         int bytesWritten = write(handle->fd, buffer + totalWritten, writeCount - totalWritten);
-        printf("write result: %d\n", bytesWritten);
+        // printf("write result: %d\n", bytesWritten);
         /*
         ERRORS
        EAGAIN The  file  descriptor  fd  refers  to a file other than a socket and has been marked nonblocking
@@ -1092,12 +1092,12 @@ void hexdump(char const prefix, unsigned char const * const buff, const size_t e
   fprintf(logfile, "%c", prefix);
 
   for (size_t i=0; i!=end; ++i) {
-    if (i % 8 == 0) printf("\n");
-    if (i % 4 == 0) printf("  ");
-    printf("%02hhx ", buff[i]);
+    // if (i % 8 == 0) printf("\n");
+    // if (i % 4 == 0) printf("  ");
+    // printf("%02hhx ", buff[i]);
     fprintf(logfile, "%02hhx ", buff[i]);
   }
-  printf("\n");
+//   printf("\n");
   fprintf(logfile, "\n");
 
   fclose(logfile);
