@@ -403,6 +403,7 @@ static int serialPortClosePlatform(serial_port_t* serialPort)
     if (handle == 0)
     {
         // not open, no close needed
+        printf("not open, no close needed %d\n", handle->fd);
         return 0;
     }
 
@@ -419,6 +420,7 @@ static int serialPortClosePlatform(serial_port_t* serialPort)
 
 #else
 
+    printf("closing file handle %d\n", handle->fd);
     close(handle->fd);
     handle->fd = 0;
 
