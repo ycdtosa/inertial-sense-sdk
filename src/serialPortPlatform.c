@@ -412,7 +412,7 @@ static int serialPortClosePlatform(serial_port_t* serialPort)
     if (handle == 0 || handle->fd == 0)
     {
         // not open, no close needed
-        printf("not open, no close needed");
+        printf("not open, no close needed\n");
         return 0;
     }
 
