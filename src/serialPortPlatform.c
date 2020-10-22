@@ -355,7 +355,12 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
 
     if (!blocking)
     {
+        printf("opening in non blocking mode\n");
         options |= O_NONBLOCK;
+    }
+    else
+    {
+        printf("opening in blocking mode\n");
     }
 
     int fd = open(port, options);
@@ -520,52 +525,44 @@ static int serialPortReadTimeoutPlatformWindows(serialPortHandle* handle, unsign
 static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned char *buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
     printf("..serialPortReadTimeoutPlatformLinux\n");
-    int totalRead = 0;
-    int dtMs;
-    int n;
-    short readReady = 0;
-    short writeReady = 0;
-    struct timeval start, curr;
-    if (timeoutMilliseconds > 0)
+    if (!readCount)
     {
-        gettimeofday(&start, NULL);
+        printf("..bailing early, nothing to read\n");
+        return 0;
     }
 
-    printf("begin poll loop\n");
-    while (1)
-    {
-        printf("\ttimeoutMilliseconds: %d\n", timeoutMilliseconds);
+    int totalRead = 0;
+    // int dtMs;
+    // int n;
+    short readReady = 0;
+    // short writeReady = 0;
+    // struct timeval start, curr;
 
+    // while (1)
+    // {
         struct pollfd fds[1];
         fds[0].fd = handle->fd;
-        fds[0].events = 0;
+        fds[0].events = POLLIN;
+        
+        /*
         if (waitForRead)
         {
             fds[0].events |= POLLIN;
         }
+        */
+        /*
         if (waitForWrite)
         {
             fds[0].events |= POLLOUT;
         }
+        */
 
         printf("\tpoll handle fd: %d\n", handle->fd);
+        printf("\twaiting for POLLIN\n");
         int pollrc = poll(fds, 1, timeoutMilliseconds);
         printf("\t%d pollrc\n", pollrc);
         printf("\t%d fds[0].revents\n", fds[0].revents);
-
-        if (timeoutMilliseconds > 0)
-        {
-            gettimeofday(&curr, NULL);
-            dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
-            if (dtMs >= timeoutMilliseconds)
-            {
-                printf("\ttimeout exceeded\n");
-                break;
-            }
-
-            // try for another loop around with a lower timeout
-            timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
-        }
+        
         /*
 On  success,  a positive number is returned; this is the number of structures which have nonzero
 revents fields (in other words, those descriptors with events or errors reported).  A value of 0
@@ -577,14 +574,14 @@ and errno is set appropriately.
         {
             printf("\tpoll ok\n");
             readReady = (fds[0].revents & POLLIN);
-            writeReady = (fds[0].revents & POLLOUT);
+            // writeReady = (fds[0].revents & POLLOUT);
 
             if (readReady)
                 printf("\t\tPOLLIN\n");
-            if (writeReady)
-                printf("\t\tPOLLOUT\n");
+            // if (writeReady)
+                // printf("\t\tPOLLOUT\n");
 
-            break;
+            // break;
         }
 
         if (pollrc == 0)
@@ -596,18 +593,6 @@ and errno is set appropriately.
         if (pollrc < 0)
         {
             printf("\t%d error code\n", errno);
-            if (errno == EAGAIN)
-            {
-                printf("\tEAGAIN received\n");
-
-                // printf("retrying...\n");
-                // sleep(1);
-                // continue;
-            }
-            if (errno == EWOULDBLOCK)
-            {
-                printf("\tEWOULDBLOCK recieved\n");
-            }
 
             /*
        EFAULT The array given as argument was not contained in the calling program's address space.
@@ -624,12 +609,7 @@ and errno is set appropriately.
             // break;
             return 0;
         }
-
-        printf("\tpoll handle fd: %d\n", handle->fd);
-        printf("\t%d total actual\n", totalRead);
-        printf("\t%d total expected\n", readCount);
-        printf("\t%d delta\n", readCount - totalRead);
-    }
+    // }
 
     /*
     if (writeReady)
@@ -654,21 +634,7 @@ and errno is set appropriately.
         printf("\t%d total expected\n", readCount);
         printf("\t%d delta\n", readCount - totalRead);
 
-        n = read(handle->fd, buffer + totalRead, readCount - totalRead);
-
-        if (timeoutMilliseconds > 0)
-        {
-            gettimeofday(&curr, NULL);
-            dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
-            if (dtMs >= timeoutMilliseconds)
-            {
-                printf("\ttimeout exceeded\n");
-                break;
-            }
-
-            // try for another loop around with a lower timeout
-            timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
-        }
+        int bytesRead = read(handle->fd, buffer + totalRead, readCount - totalRead);
         /*
        On  success,  the  number  of  bytes read is returned (zero indicates end of file), and the file
        position is advanced by this number.  It is not an error if this number is smaller than the num‐
@@ -680,18 +646,18 @@ and errno is set appropriately.
        whether the file position (if any) changes.
 */
 
-        printf("\t%d result code\n", n);
+        printf("\tread result: %d\n", bytesRead);
 
         printf("\t\tbuffer contents:\n\t\t");
         hexdump('i', buffer, readCount);
 
-        if (n < 0)
+        if (bytesRead < 0)
         {
             printf("\t%d error code\n", errno);
 
             if (errno == EWOULDBLOCK)
             {
-                printf("\tEWOULDBLOCK recieved\n");
+                printf("\tEWOULDBLOCK received\n");
             }
 
             if (errno == EAGAIN)
@@ -745,15 +711,15 @@ and errno is set appropriately.
             break;
         }
 
-        if (n == 0)
+        if (bytesRead == 0)
         {
             printf("\tEOF\n");
             break;
         }
 
-        if (n > 0)
+        if (bytesRead > 0)
         {
-            totalRead += n;
+            totalRead += bytesRead;
         }
 
         if (totalRead >= readCount)
@@ -762,7 +728,6 @@ and errno is set appropriately.
             printf("\t%d total actual\n", totalRead);
             printf("\t%d total expected\n", readCount);
             printf("\t%d delta\n", readCount - totalRead);
-            printf("\t%d timeoutMilliseconds\n", timeoutMilliseconds);
             break;
         }
     }
@@ -849,27 +814,181 @@ static int serialPortWritePlatform(serial_port_t* serialPort, const unsigned cha
 
 #else
 
-    return write(handle->fd, buffer, writeCount);
+    int totalWritten = 0;
+    short writeReady = 0;
+
+    // while (1)
+    // {
+        struct pollfd fds[1];
+        fds[0].fd = handle->fd;
+        fds[0].events = POLLOUT;
+
+        // TODO: pass through timeout value as parameter?
+        printf("\t file %d waiting for POLLOUT\n", handle->fd);
+        int pollrc = poll(fds, 1, SERIAL_PORT_DEFAULT_TIMEOUT);
+        printf("\t%d pollrc\n", pollrc);
+        printf("\t%d fds[0].revents\n", fds[0].revents);
+
+        /*
+On  success,  a positive number is returned; this is the number of structures which have nonzero
+revents fields (in other words, those descriptors with events or errors reported).  A value of 0
+indicates that the call timed out and no file descriptors were ready.  On error, -1 is returned,
+and errno is set appropriately.
+*/
+
+        if (pollrc > 0)
+        {
+            printf("\tpoll ok\n");
+            writeReady = (fds[0].revents & POLLOUT);
+
+            if (writeReady)
+                printf("\t\tPOLLOUT\n");
+
+            // break;
+        }
+
+        if (pollrc == 0)
+        {
+            printf("\tpoll timeout\n");
+            return 0;
+        }
+
+        if (pollrc < 0)
+        {
+            printf("\t%d error code\n", errno);
+            // if (errno == EAGAIN)
+            // {
+            //     printf("\tEAGAIN received\n");
+
+            //     // printf("retrying...\n");
+            //     // sleep(1);
+            //     // continue;
+            // }
+            // if (errno == EWOULDBLOCK)
+            // {
+            //     printf("\tEWOULDBLOCK received\n");
+            // }
+
+            /*
+       EFAULT The array given as argument was not contained in the calling program's address space.
+
+       EINTR  A signal occurred before any requested event; see signal(7).
+
+       EINVAL The nfds value exceeds the RLIMIT_NOFILE value.
+
+       ENOMEM There was no space to allocate file descriptor tables.
+*/
+
+            printf("\terror %d from poll, fd %d\n", errno, handle->fd);
+            error_message("error %d from poll, fd %d", errno, handle->fd);
+            // break;
+            return 0;
+        }
+
+        printf("\tpoll handle fd: %d\n", handle->fd);
+    // }
+
+
+    while (1)
+    {
+        int bytesWritten = write(handle->fd, buffer + totalWritten, writeCount - totalWritten);
+        printf("write result: %d\n", bytesWritten);
+        /*
+        ERRORS
+       EAGAIN The  file  descriptor  fd  refers  to a file other than a socket and has been marked nonblocking
+              (O_NONBLOCK), and the write would block.  See open(2) for  further  details  on  the  O_NONBLOCK
+              flag.
+
+       EAGAIN or EWOULDBLOCK
+              The  file descriptor fd refers to a socket and has been marked nonblocking (O_NONBLOCK), and the
+              write would block.  POSIX.1-2001 allows either error to be returned for this case, and does  not
+              require  these constants to have the same value, so a portable application should check for both
+              possibilities.
+
+       EBADF  fd is not a valid file descriptor or is not open for writing.
+
+       EDESTADDRREQ
+              fd refers to a datagram socket for which a peer address has not been set using connect(2).
+
+       EDQUOT The user's quota of disk blocks on the filesystem containing the file referred to by fd has been
+              exhausted.
+
+       EFAULT buf is outside your accessible address space.
+
+       EFBIG  An attempt was made to write a file that exceeds the implementation-defined maximum file size or
+              the process's file size limit, or to write at a position past the maximum allowed offset.
+
+       EINTR  The call was interrupted by a signal before any data was written; see signal(7).
+
+       EINVAL fd is attached to an object which is unsuitable for writing; or the file  was  opened  with  the
+              O_DIRECT  flag,  and  either  the address specified in buf, the value specified in count, or the
+              file offset is not suitably aligned.
+
+       EIO    A low-level I/O error occurred while modifying the inode.  This error may relate to  the  write-
+              back  of  data written by an earlier write(), which may have been issued to a different file de‐
+              scriptor on the same file.  Since Linux 4.13, errors from write-back come with  a  promise  that
+              they  may  be  reported  by  subsequent.  write() requests, and will be reported by a subsequent
+              fsync(2) (whether or not they were also reported by write()).  An alternate cause of EIO on net‐
+              worked  filesystems  is when an advisory lock had been taken out on the file descriptor and this
+              lock has been lost.  See the Lost locks section of fcntl(2) for further details.
+
+       ENOSPC The device containing the file referred to by fd has no room for the data.
+
+       EPERM  The operation was prevented by a file seal; see fcntl(2).
+
+       EPIPE  fd is connected to a pipe or socket whose reading end is closed.  When this happens the  writing
+              process  will  also receive a SIGPIPE signal.  (Thus, the write return value is seen only if the
+              program catches, blocks or ignores this signal.)
+
+*/
+
+        if (bytesWritten < 0) {
+            printf("write error\n");
+
+            if (errno == EINTR
+             || errno == EAGAIN
+             || errno == EWOULDBLOCK)
+            {
+                printf("Retrying...\n");
+                continue;
+            }
+
+            printf("write failed with error %d\n", errno);
+            break;
+        } else {
+            totalWritten += bytesWritten;
+            printf("\t%d total actual\n", totalWritten);
+            printf("\t%d total expected\n", writeCount);
+            printf("\t%d delta\n", writeCount - totalWritten);
+        }
+
+        if (totalWritten >= writeCount) {
+            printf("write complete\n");
+            break;
+        }
+    }
+
+    return totalWritten;
 
     // if desired in the future, this will block until the data has been successfully written to the serial port
     /*
-    int count = write(handle->fd, buffer, writeCount);
-    int error = tcdrain(handle->fd);
+        int count = write(handle->fd, buffer, writeCount);
+        int error = tcdrain(handle->fd);
 
-    if (error != 0)
-    {
-    error_message("error %d from tcdrain", errno);
-    return 0;
-    }
+        if (error != 0)
+        {
+            error_message("error %d from tcdrain", errno);
+            return 0;
+        }
 
-    return count;
+        return count;
+
+        if (serialPort->pfnWrite)
+        {
+            return serialPort->pfnWrite(serialPort, buffer, writeCount);
+        }
+        return 0;
     */
-
-	if (serialPort->pfnWrite)
-	{
-		return serialPort->pfnWrite(serialPort, buffer, writeCount);
-	}
-	return 0;
 
 #endif
 
