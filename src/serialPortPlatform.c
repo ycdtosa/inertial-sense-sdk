@@ -370,7 +370,7 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     int fd = open(port, options);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
     {
-        printf("open failed\n");
+        printf("open failed with errno %d\n", errno);
         return 0;
     }
     else
