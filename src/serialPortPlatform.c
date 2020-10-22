@@ -620,11 +620,13 @@ and errno is set appropriately.
         printf("\t%d delta\n", readCount - totalRead);
     }
 
+    /*
     if (writeReady)
     {
         printf("write ready\n");
         return readCount;
     }
+    */
 
     if (readReady && readCount)
     {
