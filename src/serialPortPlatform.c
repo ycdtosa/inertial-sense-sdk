@@ -368,6 +368,7 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     */
 
     int fd = open(port, options);
+    hexdump('o', "", 0);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
     {
         printf("open failed with errno %d\n", errno);
@@ -412,7 +413,7 @@ static int serialPortClosePlatform(serial_port_t* serialPort)
     if (handle == 0 || handle->fd == 0)
     {
         // not open, no close needed
-        printf("not open, no close needed\n");
+        // printf("not open, no close needed\n");
         return 0;
     }
 
@@ -429,7 +430,8 @@ static int serialPortClosePlatform(serial_port_t* serialPort)
 
 #else
 
-    printf("closing file handle %d\n", handle->fd);
+    // printf("closing file handle %d\n", handle->fd);
+    hexdump('c', "", 0);
     close(handle->fd);
     handle->fd = 0;
 
