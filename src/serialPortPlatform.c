@@ -735,10 +735,10 @@ and errno is set appropriately.
         }
     }
 
-	printf("expected value");
+	// printf("expected value");
 	hexdump('E', buffer, readCount);
 
-	printf("actual value");
+	// printf("actual value");
 	hexdump('R', buffer, totalRead);
 
     return totalRead;
@@ -900,6 +900,7 @@ and errno is set appropriately.
     {
         int bytesWritten = write(handle->fd, buffer + totalWritten, writeCount - totalWritten);
         // printf("write result: %d\n", bytesWritten);
+
         /*
         ERRORS
        EAGAIN The  file  descriptor  fd  refers  to a file other than a socket and has been marked nonblocking
@@ -979,10 +980,10 @@ and errno is set appropriately.
 	// printf("%d expected written\n", writeCount);
 	// printf("%d actually written\n", totalWritten);
 
-	printf("bytes expected written:");
+	// printf("bytes expected written:");
 	hexdump('e', buffer, writeCount);
 		
-	printf("bytes actually written:");
+	// printf("bytes actually written:");
 	hexdump('w', buffer, totalWritten);
 
     return totalWritten;
