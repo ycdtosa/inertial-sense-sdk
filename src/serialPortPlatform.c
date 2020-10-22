@@ -600,7 +600,7 @@ and errno is set appropriately.
 
         if (pollrc == 0)
         {
-            printf("\tpoll timeout\n");
+            // printf("\tpoll timeout\n");
             return 0;
         }
 
@@ -862,7 +862,7 @@ and errno is set appropriately.
 
         if (pollrc == 0)
         {
-            printf("\tpoll timeout\n");
+            // printf("\tpoll timeout\n");
             return 0;
         }
 
