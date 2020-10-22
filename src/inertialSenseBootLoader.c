@@ -978,7 +978,6 @@ static int bootloaderProcessBinFile(FILE* file, bootload_params_t* p)
                     serialPortWrite(p->port, buf, 2);
                 }
 
-		printf("==================================================\n\nbootloaderProcessBinFile waiting for 3 bytes [DRN]\n\n==================================================\n\n");
                 serialPortWaitForTimeout(p->port, (unsigned char*)".\r\n", 3, BOOTLOADER_TIMEOUT_DEFAULT);
 
                 if (p->uploadProgress != 0)
@@ -1027,7 +1026,6 @@ static int bootloaderProcessBinFile(FILE* file, bootload_params_t* p)
                 {
                     unsigned char waitFor[4];
                     bootloader_snprintf((char*)waitFor, 4, "%c\r\n", c);
-		    printf("bootloaderProcessBinFile waiting for 3 bytes [CRN]...\n");
                     serialPortWaitForTimeout(p->port, waitFor, 3, commandLength);
                 }
             }

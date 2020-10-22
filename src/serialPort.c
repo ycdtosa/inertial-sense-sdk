@@ -93,10 +93,8 @@ int serialPortReadTimeout(serial_port_t* serialPort, unsigned char* buffer, int 
 
 int serialPortReadTimeoutWithFlags(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
-	printf("%s\n", "serialPortReadTimeout");
 	if (serialPort == 0 || serialPort->handle == 0 || buffer == 0 || readCount < 1 || serialPort->pfnRead == 0)
 	{
-		printf("%s\n", "bailing early, invalid serial port or handle, or read count less than 1, or invalid read function");
 		return 0;
 	}
 
@@ -104,11 +102,9 @@ int serialPortReadTimeoutWithFlags(serial_port_t* serialPort, unsigned char* buf
 
 	if (count < 0)
 	{
-		printf("%s\n", "read failed, count less than zero");
 		return 0;
 	}
 
-	printf("%d %s\n", count, "bytes read");
 	return count;
 }
 
@@ -294,17 +290,14 @@ int serialPortWriteAndWaitFor(serial_port_t* serialPort, const unsigned char* bu
 
 int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned char* buffer, int writeCount, const unsigned char* waitFor, int waitForLength, const int timeoutMilliseconds)
 {
-	printf("serialPortWriteAndWaitForTimeout\n");
 	if (serialPort == 0 || serialPort->handle == 0 || buffer == 0 || writeCount < 1 || waitFor == 0 || waitForLength < 1)
 	{
-		printf("bailing early, serial port or handle is invalid, or buffer is empty, or expected write count is less than 1 or nothing to wait for\n");
 		return 0;
 	}
 
 	int actuallyWrittenCount = serialPortWrite(serialPort, buffer, writeCount);
 	if (actuallyWrittenCount != writeCount)
 	{
-		printf("expected write count is not equal to actual write count\n");
 		return 0;
 	}
 
@@ -323,34 +316,23 @@ int serialPortWaitForTimeout(serial_port_t* serialPort, const unsigned char* wai
 
 int serialPortWaitForTimeoutWithFlags(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
-	printf("%s\n", "serialPortWaitForTimeoutWithFlags");
 	if (serialPort == 0 || serialPort->handle == 0 || waitFor == 0 || waitForLength < 1)
 	{
-		printf("%s\n", "bailing early, serial port or handle is invalid");
 		return 1;
 	}
 	else if (waitForLength > 128)
 	{
-		printf("%s\n", "bailing early, invalid wait time");
 		return 0;
 	}
-
-	// hack: force all timeouts to be 5 seconds
-	//timeoutMilliseconds = 5000;
 
 	unsigned char buf[128] = { 0 };
 	// int count = serialPortReadTimeout(serialPort, buf, waitForLength, timeoutMilliseconds);
 	int count = serialPortReadTimeoutWithFlags(serialPort, buf, waitForLength, timeoutMilliseconds, waitForRead, waitForWrite);
-	printf("%d timeoutMilliseconds\n", timeoutMilliseconds);
-	printf("%d expected read byte count\n", waitForLength);
-	printf("%d actual read byte count\n", count);
 
 	if (count == waitForLength && memcmp(buf, waitFor, waitForLength) == 0)
 	{
-		printf("count equals wait for length and memcmp returned 0\n");
 		return 1;
 	}
-	printf("byte count mismatch or string comparison failure\n");
 
 	return 0;
 }
