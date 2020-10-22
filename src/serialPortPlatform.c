@@ -352,16 +352,20 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     options |= O_RDWR;
     options |= O_NOCTTY;
     options |= O_EXCL;
-
+    
+    /*
     if (!blocking)
     {
+        */
         printf("opening in non blocking mode\n");
         options |= O_NONBLOCK;
+        /*
     }
     else
     {
         printf("opening in blocking mode\n");
     }
+    */
 
     int fd = open(port, options);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
