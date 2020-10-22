@@ -88,19 +88,15 @@ int serialPortRead(serial_port_t* serialPort, unsigned char* buffer, int readCou
 
 int serialPortReadTimeout(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds)
 {
-	return serialPortReadTimeoutWithFlags(serialPort, buffer, readCount, timeoutMilliseconds, true, false);
-}
-
-int serialPortReadTimeoutWithFlags(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
-{
 	if (serialPort == 0 || serialPort->handle == 0 || buffer == 0 || readCount < 1 || serialPort->pfnRead == 0)
 	{
 		return 0;
 	}
 
-	int count = serialPort->pfnRead(serialPort, buffer, readCount, timeoutMilliseconds, waitForRead, waitForWrite);
+	int count = serialPort->pfnRead(serialPort, buffer, readCount, timeoutMilliseconds);
 
 	if (count < 0)
+
 	{
 		return 0;
 	}
@@ -290,7 +286,7 @@ int serialPortWriteAndWaitFor(serial_port_t* serialPort, const unsigned char* bu
 
 int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned char* buffer, int writeCount, const unsigned char* waitFor, int waitForLength, const int timeoutMilliseconds)
 {
-	if (serialPort == 0 || serialPort->handle == 0 || buffer == 0 || writeCount < 1 || waitFor == 0 || waitForLength < 1)
+	if (serialPort == 0 || serialPort->handle == 0 || buffer == 0 || writeCount < 1)
 	{
 		return 0;
 	}
@@ -301,7 +297,12 @@ int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned c
 		return 0;
 	}
 
-	return serialPortWaitForTimeoutWithFlags(serialPort, waitFor, waitForLength, timeoutMilliseconds, true, true);
+	if (waitFor == 0 || waitForLength < 1)
+	{
+		return 1;
+	}
+
+	return serialPortWaitForTimeout(serialPort, waitFor, waitForLength, timeoutMilliseconds);
 }
 
 int serialPortWaitFor(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength)
@@ -311,23 +312,24 @@ int serialPortWaitFor(serial_port_t* serialPort, const unsigned char* waitFor, i
 
 int serialPortWaitForTimeout(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds)
 {
-	return serialPortWaitForTimeoutWithFlags(serialPort, waitFor, waitForLength, SERIAL_PORT_DEFAULT_TIMEOUT, true, false);
-}
-
-int serialPortWaitForTimeoutWithFlags(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
-{
-	if (serialPort == 0 || serialPort->handle == 0 || waitFor == 0 || waitForLength < 1)
+	if (serialPort == 0 || serialPort->handle == 0)
 	{
-		return 1;
+		// fail: no serial port or handle
+		return 0;
 	}
 	else if (waitForLength > 128)
 	{
+		// fail: not going to wait for anything that big
 		return 0;
+	}
+	else if (waitFor == 0 || waitForLength < 1)
+	{
+		// ok: nothing to wait for
+		return 1;
 	}
 
 	unsigned char buf[128] = { 0 };
-	// int count = serialPortReadTimeout(serialPort, buf, waitForLength, timeoutMilliseconds);
-	int count = serialPortReadTimeoutWithFlags(serialPort, buf, waitForLength, timeoutMilliseconds, waitForRead, waitForWrite);
+	int count = serialPortReadTimeout(serialPort, buf, waitForLength, timeoutMilliseconds);
 
 	if (count == waitForLength && memcmp(buf, waitFor, waitForLength) == 0)
 	{

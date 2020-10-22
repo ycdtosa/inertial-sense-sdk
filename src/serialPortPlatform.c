@@ -535,7 +535,7 @@ static int serialPortReadTimeoutPlatformWindows(serialPortHandle* handle, unsign
 
 #else
 
-static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned char *buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
+static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned char *buffer, int readCount, int timeoutMilliseconds)
 {
     // printf("..serialPortReadTimeoutPlatformLinux\n");
     if (!readCount)
@@ -557,19 +557,6 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned
         fds[0].fd = handle->fd;
         fds[0].events = POLLIN;
         
-        /*
-        if (waitForRead)
-        {
-            fds[0].events |= POLLIN;
-        }
-        */
-        /*
-        if (waitForWrite)
-        {
-            fds[0].events |= POLLOUT;
-        }
-        */
-
         // printf("\tpoll handle fd: %d\n", handle->fd);
         // printf("\twaiting for POLLIN\n");
 	    hexdump('P', buffer, readCount);
@@ -748,7 +735,7 @@ and errno is set appropriately.
 
 #endif
 
-static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
+static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds)
 {
     serialPortHandle* handle = (serialPortHandle*)serialPort->handle;
     if (timeoutMilliseconds < 0)
@@ -762,7 +749,7 @@ static int serialPortReadTimeoutPlatform(serial_port_t* serialPort, unsigned cha
 
 #else
 
-    return serialPortReadTimeoutPlatformLinux(handle, buffer, readCount, timeoutMilliseconds, waitForRead, waitForWrite);
+    return serialPortReadTimeoutPlatformLinux(handle, buffer, readCount, timeoutMilliseconds);
 
 #endif
 

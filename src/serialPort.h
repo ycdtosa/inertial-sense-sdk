@@ -51,8 +51,7 @@ typedef struct serial_port_t serial_port_t;
 
 typedef int(*pfnSerialPortOpen)(serial_port_t* serialPort, const char* port, int baudRate, int blocking);
 typedef int(*pfnSerialPortIsOpen)(serial_port_t* serialPort);
-//typedef int(*pfnSerialPortRead)(serial_port_t* serialPort, unsigned char* buf, int len, int timeoutMilliseconds);
-typedef int(*pfnSerialPortRead)(serial_port_t* serialPort, unsigned char* buf, int len, int timeoutMilliseconds, bool waitForRead, bool waitForWrite);
+typedef int(*pfnSerialPortRead)(serial_port_t* serialPort, unsigned char* buf, int len, int timeoutMilliseconds);
 typedef void(*pfnSerialPortAsyncReadCompletion)(serial_port_t* serialPort, unsigned char* buf, int len, int errorCode);
 typedef int(*pfnSerialPortAsyncRead)(serial_port_t* serialPort, unsigned char* buf, int len, pfnSerialPortAsyncReadCompletion completion);
 typedef int(*pfnSerialPortWrite)(serial_port_t* serialPort, const unsigned char* buf, int len);
@@ -143,7 +142,6 @@ int serialPortRead(serial_port_t* serialPort, unsigned char* buffer, int readCou
 
 // read up to thue number of bytes requested, returns number of bytes read which is less than or equal to readCount
 int serialPortReadTimeout(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds);
-int serialPortReadTimeoutWithFlags(serial_port_t* serialPort, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite);
 
 // start an async read - not all platforms will support an async read and may call the callback function immediately
 // reads up to readCount bytes into buffer
@@ -195,7 +193,6 @@ int serialPortWriteAndWaitForTimeout(serial_port_t* serialPort, const unsigned c
 // wait for a response, returns 0 if failure, 1 if success
 int serialPortWaitFor(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength);
 int serialPortWaitForTimeout(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds);
-int serialPortWaitForTimeoutWithFlags(serial_port_t* serialPort, const unsigned char* waitFor, int waitForLength, int timeoutMilliseconds, bool waitForRead, bool waitForWrite);
 
 // get available bytes in the receive buffer
 int serialPortGetByteCountAvailableToRead(serial_port_t* serialPort);
