@@ -370,7 +370,12 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     int fd = open(port, options);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
     {
+        printf("open failed\n");
         return 0;
+    }
+    else
+    {
+        printf("file handle opened: %d\n", fd);
     }
     serialPortHandle* handle = (serialPortHandle*)calloc(sizeof(serialPortHandle), 1);
     handle->fd = fd;
@@ -404,10 +409,10 @@ static int serialPortIsOpenPlatform(serial_port_t* serialPort)
 static int serialPortClosePlatform(serial_port_t* serialPort)
 {
     serialPortHandle* handle = (serialPortHandle*)serialPort->handle;
-    if (handle == 0)
+    if (handle == 0 || handle->fd == 0)
     {
         // not open, no close needed
-        printf("not open, no close needed %d\n", handle->fd);
+        printf("not open, no close needed");
         return 0;
     }
 
