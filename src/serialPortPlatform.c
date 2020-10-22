@@ -506,7 +506,7 @@ static int serialPortReadTimeoutPlatformWindows(serialPortHandle* handle, unsign
 
 #else
 
-static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned char* buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
+static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned char *buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
     printf("..serialPortReadTimeoutPlatformLinux\n");
     int totalRead = 0;
@@ -525,78 +525,80 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle* handle, unsigned
     {
         printf("\ttimeoutMilliseconds: %d\n", timeoutMilliseconds);
 
-	struct pollfd fds[1];
-	fds[0].fd = handle->fd;
-	fds[0].events = 0;
-	if (waitForRead)
-	{
-		fds[0].events |= POLLIN;
-	}
-	if (waitForWrite)
-	{
-		fds[0].events |= POLLOUT;
-	}
+        struct pollfd fds[1];
+        fds[0].fd = handle->fd;
+        fds[0].events = 0;
+        if (waitForRead)
+        {
+            fds[0].events |= POLLIN;
+        }
+        if (waitForWrite)
+        {
+            fds[0].events |= POLLOUT;
+        }
 
-	printf("\tpoll handle fd: %d\n", handle->fd);
-	int pollrc = poll(fds, 1, timeoutMilliseconds);
-	printf("\t%d pollrc\n", pollrc);
-	printf("\t%d fds[0].revents\n", fds[0].revents);
+        printf("\tpoll handle fd: %d\n", handle->fd);
+        int pollrc = poll(fds, 1, timeoutMilliseconds);
+        printf("\t%d pollrc\n", pollrc);
+        printf("\t%d fds[0].revents\n", fds[0].revents);
 
         if (timeoutMilliseconds > 0)
         {
-	    gettimeofday(&curr, NULL);
-	    dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
-	    if (dtMs >= timeoutMilliseconds)
-	    {
-		printf("\ttimeout exceeded\n");
-		break;
-	    }
+            gettimeofday(&curr, NULL);
+            dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
+            if (dtMs >= timeoutMilliseconds)
+            {
+                printf("\ttimeout exceeded\n");
+                break;
+            }
 
-	    // try for another loop around with a lower timeout
-	    timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
-	}
-/*
+            // try for another loop around with a lower timeout
+            timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
+        }
+        /*
 On  success,  a positive number is returned; this is the number of structures which have nonzero
 revents fields (in other words, those descriptors with events or errors reported).  A value of 0
 indicates that the call timed out and no file descriptors were ready.  On error, -1 is returned,
 and errno is set appropriately.
 */
 
-	    if (pollrc > 0)
-	    {
-		printf("\tpoll ok\n");
-		readReady = (fds[0].revents & POLLIN);
-		writeReady = (fds[0].revents & POLLOUT);
+        if (pollrc > 0)
+        {
+            printf("\tpoll ok\n");
+            readReady = (fds[0].revents & POLLIN);
+            writeReady = (fds[0].revents & POLLOUT);
 
-		if (readReady) printf("\t\tPOLLIN\n");
-		if (writeReady) printf("\t\tPOLLOUT\n");
+            if (readReady)
+                printf("\t\tPOLLIN\n");
+            if (writeReady)
+                printf("\t\tPOLLOUT\n");
 
-		break;
-	    }
+            break;
+        }
 
-	    if (pollrc == 0)
-	    {
-		printf("\tpoll timeout\n");
-		return 0;
-	    }
+        if (pollrc == 0)
+        {
+            printf("\tpoll timeout\n");
+            return 0;
+        }
 
-	    if (pollrc < 0)
-	    {
-		printf("\t%d error code\n", errno);
-		if (errno == EAGAIN)
-		{
-			printf("\tEAGAIN received\n");
-			
-			// printf("retrying...\n");
-			// sleep(1);
-			// continue;
-		}
-		if (errno == EWOULDBLOCK)
-		{
-			printf("\tEWOULDBLOCK recieved\n");
-		}
+        if (pollrc < 0)
+        {
+            printf("\t%d error code\n", errno);
+            if (errno == EAGAIN)
+            {
+                printf("\tEAGAIN received\n");
 
-/*
+                // printf("retrying...\n");
+                // sleep(1);
+                // continue;
+            }
+            if (errno == EWOULDBLOCK)
+            {
+                printf("\tEWOULDBLOCK recieved\n");
+            }
+
+            /*
        EFAULT The array given as argument was not contained in the calling program's address space.
 
        EINTR  A signal occurred before any requested event; see signal(7).
@@ -606,12 +608,11 @@ and errno is set appropriately.
        ENOMEM There was no space to allocate file descriptor tables.
 */
 
-
-		printf("\terror %d from poll, fd %d\n", errno, handle->fd);
-		error_message("error %d from poll, fd %d", errno, handle->fd);
-		// break;
-		return 0;
-	    }
+            printf("\terror %d from poll, fd %d\n", errno, handle->fd);
+            error_message("error %d from poll, fd %d", errno, handle->fd);
+            // break;
+            return 0;
+        }
 
         printf("\tpoll handle fd: %d\n", handle->fd);
         printf("\t%d total actual\n", totalRead);
@@ -621,17 +622,17 @@ and errno is set appropriately.
 
     if (writeReady)
     {
-	    printf("write ready\n");
-	    return readCount;
+        printf("write ready\n");
+        return readCount;
     }
 
     if (readReady && readCount)
     {
-	    printf("begin read loop\n");
+        printf("begin read loop\n");
     }
     else
     {
-	    printf("skipping read loop\n");
+        printf("skipping read loop\n");
     }
 
     while (readReady && readCount)
@@ -648,14 +649,14 @@ and errno is set appropriately.
             dtMs = ((curr.tv_sec - start.tv_sec) * 1000) + ((curr.tv_usec - start.tv_usec) / 1000);
             if (dtMs >= timeoutMilliseconds)
             {
-		printf("\ttimeout exceeded\n");
+                printf("\ttimeout exceeded\n");
                 break;
             }
 
             // try for another loop around with a lower timeout
             timeoutMilliseconds = _MAX(0, timeoutMilliseconds - dtMs);
         }
-/*
+        /*
        On  success,  the  number  of  bytes read is returned (zero indicates end of file), and the file
        position is advanced by this number.  It is not an error if this number is smaller than the num‐
        ber  of  bytes requested; this may happen for example because fewer bytes are actually available
@@ -666,30 +667,30 @@ and errno is set appropriately.
        whether the file position (if any) changes.
 */
 
-	printf("\t%d result code\n", n);
+        printf("\t%d result code\n", n);
 
-	printf("\t\tbuffer contents:\n\t\t");
-	hexdump('i', buffer, readCount);
+        printf("\t\tbuffer contents:\n\t\t");
+        hexdump('i', buffer, readCount);
 
-	if (n < 0)
-	{
-		printf("\t%d error code\n", errno);
+        if (n < 0)
+        {
+            printf("\t%d error code\n", errno);
 
-		if (errno == EWOULDBLOCK)
-		{
-			printf("\tEWOULDBLOCK recieved\n");
-		}
+            if (errno == EWOULDBLOCK)
+            {
+                printf("\tEWOULDBLOCK recieved\n");
+            }
 
-		if (errno == EAGAIN)
-		{
-			printf("\tEAGAIN received\n");
-			
-			//printf("retrying...\n");
-			//sleep(1);
-			//continue;
-		}
+            if (errno == EAGAIN)
+            {
+                printf("\tEAGAIN received\n");
 
-/*
+                //printf("retrying...\n");
+                //sleep(1);
+                //continue;
+            }
+
+            /*
        EAGAIN The file descriptor fd refers to a file other than a socket and has been marked nonblock‐
               ing  (O_NONBLOCK),  and  the  read  would  block.  See open(2) for further details on the
               O_NONBLOCK flag.
@@ -726,30 +727,29 @@ and errno is set appropriately.
 
 */
 
-		printf("\terror %d from read, fd %d\n", errno, handle->fd);
-		error_message("error %d from read, fd %d\n", errno, handle->fd);
-		break;
-	}
+            printf("\terror %d from read, fd %d\n", errno, handle->fd);
+            error_message("error %d from read, fd %d\n", errno, handle->fd);
+            break;
+        }
 
-	if (n == 0)
-	{
-		printf("\tEOF\n");
-		break;
-	}
+        if (n == 0)
+        {
+            printf("\tEOF\n");
+            break;
+        }
 
-	if (n > 0)
-	{
+        if (n > 0)
+        {
             totalRead += n;
-	}
+        }
 
-
-	if (totalRead >= readCount)
+        if (totalRead >= readCount)
         {
             printf("read complete\n");
             printf("\t%d total actual\n", totalRead);
             printf("\t%d total expected\n", readCount);
             printf("\t%d delta\n", readCount - totalRead);
-	    printf("\t%d timeoutMilliseconds\n", timeoutMilliseconds);
+            printf("\t%d timeoutMilliseconds\n", timeoutMilliseconds);
             break;
         }
     }
