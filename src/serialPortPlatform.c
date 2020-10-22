@@ -347,7 +347,18 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
 */
 
     //int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
-    int fd = open(port, O_RDWR | O_NOCTTY);
+
+    int options = 0;
+    options |= O_RDWR;
+    options |= O_NOCTTY;
+    options |= O_EXCL;
+
+    if (!blocking)
+    {
+        options |= O_NONBLOCK;
+    }
+
+    int fd = open(port, options);
     if (fd < 0 || set_interface_attribs(fd, baudRate, 0) != 0)
     {
         return 0;
