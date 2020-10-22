@@ -623,6 +623,7 @@ and errno is set appropriately.
     if (readReady && readCount)
     {
         // printf("begin read loop\n");
+	    hexdump('E', buffer, readCount);
     }
     else
     {
@@ -725,7 +726,6 @@ and errno is set appropriately.
     }
 
 	// printf("expected value");
-	hexdump('E', buffer, readCount);
 
 	// printf("actual value");
 	hexdump('R', buffer, totalRead);
@@ -879,6 +879,7 @@ and errno is set appropriately.
     if (writeReady && writeCount)
     {
         // printf("begin read loop\n");
+	    hexdump('e', buffer, writeCount);
     }
     else
     {
@@ -970,7 +971,6 @@ and errno is set appropriately.
 	// printf("%d actually written\n", totalWritten);
 
 	// printf("bytes expected written:");
-	hexdump('e', buffer, writeCount);
 		
 	// printf("bytes actually written:");
 	hexdump('w', buffer, totalWritten);
