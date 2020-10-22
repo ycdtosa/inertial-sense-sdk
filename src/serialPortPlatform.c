@@ -631,18 +631,14 @@ and errno is set appropriately.
     }
     */
 
-    /*
     if (readReady && readCount)
     {
-        printf("begin read loop\n");
+        // printf("begin read loop\n");
     }
     else
     {
-        */
         printf("skipping read loop\n");
-        /*
     }
-    */
 
     while (readReady && readCount)
     {
@@ -662,7 +658,7 @@ and errno is set appropriately.
        whether the file position (if any) changes.
 */
 
-        printf("\tread result: %d\n", bytesRead);
+        // printf("\tread result: %d\n", bytesRead);
 
         if (bytesRead < 0)
         {
@@ -838,11 +834,11 @@ static int serialPortWritePlatform(serial_port_t* serialPort, const unsigned cha
         fds[0].events = POLLOUT;
 
         // TODO: pass through timeout value as parameter?
-        printf("\t file %d waiting for POLLOUT\n", handle->fd);
+        // printf("\t file %d waiting for POLLOUT\n", handle->fd);
 	    hexdump('p', buffer, writeCount);
         int pollrc = poll(fds, 1, SERIAL_PORT_DEFAULT_TIMEOUT);
-        printf("\t%d pollrc\n", pollrc);
-        printf("\t%d fds[0].revents\n", fds[0].revents);
+        // printf("\t%d pollrc\n", pollrc);
+        // printf("\t%d fds[0].revents\n", fds[0].revents);
 
         /*
 On  success,  a positive number is returned; this is the number of structures which have nonzero
@@ -853,11 +849,11 @@ and errno is set appropriately.
 
         if (pollrc > 0)
         {
-            printf("\tpoll ok\n");
+            // printf("\tpoll ok\n");
             writeReady = (fds[0].revents & POLLOUT);
 
-            if (writeReady)
-                printf("\t\tPOLLOUT\n");
+            // if (writeReady)
+            //     printf("\t\tPOLLOUT\n");
 
             // break;
         }
@@ -891,8 +887,16 @@ and errno is set appropriately.
         printf("\tpoll handle fd: %d\n", handle->fd);
     // }
 
+    if (writeReady && writeCount)
+    {
+        // printf("begin read loop\n");
+    }
+    else
+    {
+        printf("skipping write loop\n");
+    }
 
-    while (1)
+    while (writeReady && writeCount)
     {
         int bytesWritten = write(handle->fd, buffer + totalWritten, writeCount - totalWritten);
         printf("write result: %d\n", bytesWritten);
@@ -961,19 +965,19 @@ and errno is set appropriately.
             break;
         } else {
             totalWritten += bytesWritten;
-            printf("\t%d total actual\n", totalWritten);
-            printf("\t%d total expected\n", writeCount);
-            printf("\t%d delta\n", writeCount - totalWritten);
+            // printf("\t%d total actual\n", totalWritten);
+            // printf("\t%d total expected\n", writeCount);
+            // printf("\t%d delta\n", writeCount - totalWritten);
         }
 
         if (totalWritten >= writeCount) {
-            printf("write complete\n");
+            // printf("write complete\n");
             break;
         }
     }
 
-	printf("%d expected written\n", writeCount);
-	printf("%d actually written\n", totalWritten);
+	// printf("%d expected written\n", writeCount);
+	// printf("%d actually written\n", totalWritten);
 
 	printf("bytes expected written:");
 	hexdump('e', buffer, writeCount);
