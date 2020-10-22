@@ -357,7 +357,7 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     if (!blocking)
     {
         */
-        printf("opening in non blocking mode\n");
+        // printf("opening in non blocking mode\n");
         options |= O_NONBLOCK;
         /*
     }
@@ -375,7 +375,7 @@ static int serialPortOpenPlatform(serial_port_t* serialPort, const char* port, i
     }
     else
     {
-        printf("file handle opened: %d\n", fd);
+        // printf("file handle opened: %d\n", fd);
     }
     serialPortHandle* handle = (serialPortHandle*)calloc(sizeof(serialPortHandle), 1);
     handle->fd = fd;
@@ -535,10 +535,10 @@ static int serialPortReadTimeoutPlatformWindows(serialPortHandle* handle, unsign
 
 static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned char *buffer, int readCount, int timeoutMilliseconds, bool waitForRead, bool waitForWrite)
 {
-    printf("..serialPortReadTimeoutPlatformLinux\n");
+    // printf("..serialPortReadTimeoutPlatformLinux\n");
     if (!readCount)
     {
-        printf("..bailing early, nothing to read\n");
+        // printf("..bailing early, nothing to read\n");
         return 0;
     }
 
@@ -568,12 +568,12 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned
         }
         */
 
-        printf("\tpoll handle fd: %d\n", handle->fd);
-        printf("\twaiting for POLLIN\n");
+        // printf("\tpoll handle fd: %d\n", handle->fd);
+        // printf("\twaiting for POLLIN\n");
 	    hexdump('P', buffer, readCount);
         int pollrc = poll(fds, 1, timeoutMilliseconds);
-        printf("\t%d pollrc\n", pollrc);
-        printf("\t%d fds[0].revents\n", fds[0].revents);
+        // printf("\t%d pollrc\n", pollrc);
+        // printf("\t%d fds[0].revents\n", fds[0].revents);
         
         /*
 On  success,  a positive number is returned; this is the number of structures which have nonzero
@@ -584,12 +584,12 @@ and errno is set appropriately.
 
         if (pollrc > 0)
         {
-            printf("\tpoll ok\n");
+            // printf("\tpoll ok\n");
             readReady = (fds[0].revents & POLLIN);
             // writeReady = (fds[0].revents & POLLOUT);
 
-            if (readReady)
-                printf("\t\tPOLLIN\n");
+            // if (readReady)
+                // printf("\t\tPOLLIN\n");
             // if (writeReady)
                 // printf("\t\tPOLLOUT\n");
 
@@ -631,20 +631,24 @@ and errno is set appropriately.
     }
     */
 
+    /*
     if (readReady && readCount)
     {
         printf("begin read loop\n");
     }
     else
     {
+        */
         printf("skipping read loop\n");
+        /*
     }
+    */
 
     while (readReady && readCount)
     {
-        printf("\t%d total actual\n", totalRead);
-        printf("\t%d total expected\n", readCount);
-        printf("\t%d delta\n", readCount - totalRead);
+        // printf("\t%d total actual\n", totalRead);
+        // printf("\t%d total expected\n", readCount);
+        // printf("\t%d delta\n", readCount - totalRead);
 
         int bytesRead = read(handle->fd, buffer + totalRead, readCount - totalRead);
         /*
@@ -664,18 +668,12 @@ and errno is set appropriately.
         {
             printf("\t%d error code\n", errno);
 
-            if (errno == EWOULDBLOCK)
+            if (errno == EINTR
+             || errno == EAGAIN
+             || errno == EWOULDBLOCK)
             {
-                printf("\tEWOULDBLOCK received\n");
-            }
-
-            if (errno == EAGAIN)
-            {
-                printf("\tEAGAIN received\n");
-
-                //printf("retrying...\n");
-                //sleep(1);
-                //continue;
+                printf("retrying read...\n");
+                continue;
             }
 
             /*
@@ -733,10 +731,10 @@ and errno is set appropriately.
 
         if (totalRead >= readCount)
         {
-            printf("read complete\n");
-            printf("\t%d total actual\n", totalRead);
-            printf("\t%d total expected\n", readCount);
-            printf("\t%d delta\n", readCount - totalRead);
+            // printf("read complete\n");
+            // printf("\t%d total actual\n", totalRead);
+            // printf("\t%d total expected\n", readCount);
+            // printf("\t%d delta\n", readCount - totalRead);
             break;
         }
     }
@@ -873,18 +871,6 @@ and errno is set appropriately.
         if (pollrc < 0)
         {
             printf("\t%d error code\n", errno);
-            // if (errno == EAGAIN)
-            // {
-            //     printf("\tEAGAIN received\n");
-
-            //     // printf("retrying...\n");
-            //     // sleep(1);
-            //     // continue;
-            // }
-            // if (errno == EWOULDBLOCK)
-            // {
-            //     printf("\tEWOULDBLOCK received\n");
-            // }
 
             /*
        EFAULT The array given as argument was not contained in the calling program's address space.
@@ -966,7 +952,8 @@ and errno is set appropriately.
              || errno == EAGAIN
              || errno == EWOULDBLOCK)
             {
-                printf("Retrying...\n");
+                printf("retrying write...\n");
+                sleep(1);
                 continue;
             }
 
