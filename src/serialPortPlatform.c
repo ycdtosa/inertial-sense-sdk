@@ -570,6 +570,7 @@ static int serialPortReadTimeoutPlatformLinux(serialPortHandle *handle, unsigned
 
         printf("\tpoll handle fd: %d\n", handle->fd);
         printf("\twaiting for POLLIN\n");
+	    hexdump('P', buffer, readCount);
         int pollrc = poll(fds, 1, timeoutMilliseconds);
         printf("\t%d pollrc\n", pollrc);
         printf("\t%d fds[0].revents\n", fds[0].revents);
@@ -840,6 +841,7 @@ static int serialPortWritePlatform(serial_port_t* serialPort, const unsigned cha
 
         // TODO: pass through timeout value as parameter?
         printf("\t file %d waiting for POLLOUT\n", handle->fd);
+	    hexdump('p', buffer, writeCount);
         int pollrc = poll(fds, 1, SERIAL_PORT_DEFAULT_TIMEOUT);
         printf("\t%d pollrc\n", pollrc);
         printf("\t%d fds[0].revents\n", fds[0].revents);
