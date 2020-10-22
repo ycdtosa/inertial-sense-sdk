@@ -659,9 +659,6 @@ and errno is set appropriately.
 
         printf("\tread result: %d\n", bytesRead);
 
-        printf("\t\tbuffer contents:\n\t\t");
-        hexdump('i', buffer, readCount);
-
         if (bytesRead < 0)
         {
             printf("\t%d error code\n", errno);
@@ -742,6 +739,13 @@ and errno is set appropriately.
             break;
         }
     }
+
+	printf("expected value");
+	hexdump('E', buffer, readCount);
+
+	printf("actual value");
+	hexdump('R', buffer, totalRead);
+
     return totalRead;
 }
 
@@ -979,6 +983,15 @@ and errno is set appropriately.
         }
     }
 
+	printf("%d expected written\n", writeCount);
+	printf("%d actually written\n", totalWritten);
+
+	printf("bytes expected written:");
+	hexdump('e', buffer, writeCount);
+		
+	printf("bytes actually written:");
+	hexdump('w', buffer, totalWritten);
+
     return totalWritten;
 
     // if desired in the future, this will block until the data has been successfully written to the serial port
@@ -1077,4 +1090,22 @@ int serialPortPlatformInit(serial_port_t* serialPort)
     serialPort->pfnGetByteCountAvailableToWrite = serialPortGetByteCountAvailableToWritePlatform;
     serialPort->pfnSleep = serialPortSleepPlatform;
     return 0;
+}
+
+void hexdump(char const prefix, unsigned char const * const buff, const size_t end)
+{
+  FILE* logfile;
+  logfile = fopen("hexdump.log", "a+");
+  fprintf(logfile, "%c", prefix);
+
+  for (size_t i=0; i!=end; ++i) {
+    if (i % 8 == 0) printf("\n");
+    if (i % 4 == 0) printf("  ");
+    printf("%02hhx ", buff[i]);
+    fprintf(logfile, "%02hhx ", buff[i]);
+  }
+  printf("\n");
+  fprintf(logfile, "\n");
+
+  fclose(logfile);
 }

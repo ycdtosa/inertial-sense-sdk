@@ -23,6 +23,8 @@ extern "C" {
 // returns non-zero if success, 0 if platform not implemented
 int serialPortPlatformInit(serial_port_t* serialPort);
 
+void hexdump(char const prefix, unsigned char const * const buff, const size_t end);
+
 #ifdef __cplusplus
 }
 #endif

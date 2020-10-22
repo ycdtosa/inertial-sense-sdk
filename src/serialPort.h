@@ -206,7 +206,6 @@ int serialPortGetByteCountAvailableToWrite(serial_port_t* serialPort);
 // sleep for the specified number of milliseconds if supported, returns 1 if success, 0 if failed to sleep
 int serialPortSleep(serial_port_t* serialPort, int sleepMilliseconds);
 
-void hexdump(char const prefix, unsigned char const * const buff, const size_t end);
 #ifdef __cplusplus
 }
 #endif
